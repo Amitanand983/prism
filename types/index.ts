@@ -24,6 +24,16 @@ export interface CriticalFile {
   risk_contribution: "LOW" | "MEDIUM" | "HIGH"
 }
 
+export interface ImpactMapEntry {
+  area: string
+  description: string
+  review_focus: string
+  files: string[]
+  additions: number
+  deletions: number
+  changes: number
+}
+
 export interface AutoComment {
   file: string
   line_hint: string
@@ -42,6 +52,7 @@ export interface PRAnalysisReport {
   meta: PRMeta
   summary: string
   risk: RiskAssessment
+  impact_map: ImpactMapEntry[]
   critical_files: CriticalFile[]
   reviewer_blind_spots: string[]
   dependency_impact: string

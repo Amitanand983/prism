@@ -2,6 +2,7 @@ import AutoComments from "@/components/AutoComments"
 import BlindSpots from "@/components/BlindSpots"
 import CriticalFiles from "@/components/CriticalFiles"
 import DependencyImpact from "@/components/DependencyImpact"
+import ImpactMap from "@/components/ImpactMap"
 import MetaBanner from "@/components/MetaBanner"
 import ReviewStrategy from "@/components/ReviewStrategy"
 import RiskMeter from "@/components/RiskMeter"
@@ -24,6 +25,7 @@ export default function ReportCard({ report }: Props) {
           <SummarySection summary={report.summary} />
         </div>
       </div>
+      <ImpactMap impacts={report.impact_map} />
       <ReviewStrategy steps={report.review_strategy} />
       <CriticalFiles files={report.critical_files} />
       <AutoComments comments={report.auto_comments} />

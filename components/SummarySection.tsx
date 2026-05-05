@@ -4,9 +4,9 @@ interface Props {
 
 export default function SummarySection({ summary }: Props) {
   return (
-    <div className="h-full rounded-2xl border border-gray-800 bg-gray-900 p-6">
-      <p className="mb-3 text-xs font-medium uppercase tracking-wider text-gray-400">Semantic Summary</p>
-      <p className="text-base leading-7 text-gray-200">{summary}</p>
+    <div className="h-full rounded-3xl border border-white/10 bg-white/[0.045] p-6 shadow-2xl shadow-black/25 backdrop-blur-xl">
+      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-blue-300">Semantic Summary</p>
+      <p className="text-base leading-8 text-slate-200">{summary}</p>
     </div>
   )
 }

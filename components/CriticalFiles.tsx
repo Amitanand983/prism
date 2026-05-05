@@ -18,12 +18,15 @@ export default function CriticalFiles({ files }: Props) {
       <p className="mb-4 text-xs font-semibold uppercase tracking-[0.22em] text-blue-300">Critical Files</p>
       <div className="space-y-3">
         {files.map((file) => (
-          <div key={`${file.file}-${file.reason}`} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-slate-950/45 p-4">
+          <div
+            key={`${file.file}-${file.reason}`}
+            className="flex min-w-0 flex-col gap-3 rounded-2xl border border-white/10 bg-slate-950/45 p-4 sm:flex-row sm:items-start"
+          >
             <span className={`flex-shrink-0 rounded-full border px-2 py-1 text-xs font-bold ${RISK_COLORS[file.risk_contribution]}`}>
               {file.risk_contribution}
             </span>
-            <div>
-              <p className="font-mono text-sm text-blue-300">{file.file}</p>
+            <div className="min-w-0 flex-1">
+              <p className="break-all font-mono text-sm leading-6 text-blue-300">{file.file}</p>
               <p className="mt-1 text-xs leading-5 text-slate-400">{file.reason}</p>
             </div>
           </div>

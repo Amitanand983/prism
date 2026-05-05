@@ -16,10 +16,10 @@ export default function ReviewStrategy({ steps }: Props) {
             <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-blue-400/30 bg-blue-500/20 text-xs font-bold text-blue-200">
               {step.step}
             </div>
-            <div>
-              <p className="text-sm font-semibold text-white">{step.action}</p>
+            <div className="min-w-0">
+              <p className="break-words text-sm font-semibold text-white">{step.action}</p>
               <p className="mt-1 text-xs leading-5 text-slate-400">
-                <span className="font-mono text-blue-300">{step.target}</span>: {step.reason}
+                <span className="break-all font-mono text-blue-300">{step.target}</span>: {step.reason}
               </p>
             </div>
           </div>

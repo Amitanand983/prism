@@ -56,8 +56,10 @@ export default function HistoryList({ history, loading, error, onSelect }: Props
               className="group w-full rounded-2xl border border-white/10 bg-slate-950/55 p-4 text-left transition hover:-translate-y-0.5 hover:border-blue-400/50 hover:bg-slate-900/80 hover:shadow-xl hover:shadow-blue-950/20"
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="font-semibold text-white transition group-hover:text-blue-100">{item.pr_title}</p>
+                <div className="min-w-0">
+                  <p className="break-words font-semibold text-white transition group-hover:text-blue-100">
+                    {item.pr_title}
+                  </p>
                   <p className="mt-1 break-all font-mono text-xs text-slate-500">{item.pr_url}</p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2 text-xs">

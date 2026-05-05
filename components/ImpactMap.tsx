@@ -28,8 +28,8 @@ export default function ImpactMap({ impacts }: Props) {
           return (
             <div key={impact.area} className="rounded-2xl border border-white/10 bg-slate-950/55 p-4">
               <div className="mb-3 flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="font-semibold text-white">{impact.area}</h3>
+                <div className="min-w-0">
+                  <h3 className="break-words font-semibold text-white">{impact.area}</h3>
                   <p className="mt-1 text-sm leading-6 text-slate-400">{impact.description}</p>
                 </div>
                 <span className="shrink-0 rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-1 text-xs font-medium text-blue-300">
@@ -59,10 +59,12 @@ export default function ImpactMap({ impacts }: Props) {
               {impact.flow.length > 0 && (
                 <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Affected flow</p>
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300">
+                  <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-slate-300">
                     {impact.flow.map((step, index) => (
-                      <span key={step} className="flex items-center gap-2">
-                        <span className="rounded-lg border border-white/10 bg-slate-950/60 px-2 py-1 font-mono">{step}</span>
+                      <span key={step} className="flex min-w-0 items-center gap-2">
+                        <span className="break-all rounded-lg border border-white/10 bg-slate-950/60 px-2 py-1 font-mono">
+                          {step}
+                        </span>
                         {index < impact.flow.length - 1 && <span className="text-slate-600">-&gt;</span>}
                       </span>
                     ))}
@@ -85,7 +87,7 @@ export default function ImpactMap({ impacts }: Props) {
 
               <div className="mt-3 space-y-1">
                 {impact.files.slice(0, MAX_VISIBLE_FILES).map((file) => (
-                  <p key={file} className="truncate font-mono text-xs text-blue-300">
+                  <p key={file} className="break-all font-mono text-xs leading-5 text-blue-300">
                     {file}
                   </p>
                 ))}

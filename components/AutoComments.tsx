@@ -19,10 +19,12 @@ export default function AutoComments({ comments }: Props) {
       <div className="space-y-4">
         {comments.map((comment) => (
           <div key={`${comment.file}-${comment.line_hint}-${comment.comment}`} className={`rounded-2xl border p-4 ${SEVERITY_STYLES[comment.severity]}`}>
-            <div className="mb-2 flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-white/10 bg-slate-950/40 px-2 py-0.5 text-xs font-bold">{comment.severity}</span>
-              <span className="font-mono text-xs text-slate-300">{comment.file}</span>
-              <span className="text-xs text-slate-500">{comment.line_hint}</span>
+            <div className="mb-2 flex min-w-0 flex-wrap items-start gap-2">
+              <span className="shrink-0 rounded-full border border-white/10 bg-slate-950/40 px-2 py-0.5 text-xs font-bold">
+                {comment.severity}
+              </span>
+              <span className="min-w-0 break-all font-mono text-xs leading-5 text-slate-300">{comment.file}</span>
+              <span className="shrink-0 text-xs text-slate-500">{comment.line_hint}</span>
             </div>
             <p className="text-sm leading-6 text-slate-200">{comment.comment}</p>
           </div>

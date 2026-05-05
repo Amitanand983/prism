@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { analyzeWithAI, parseAIResponse } from "@/lib/ai"
+import { getCurrentUser } from "@/lib/auth"
 import { buildDiffContent, fetchPRData, fetchPRFiles, fetchPRReviewComments, fetchPRReviews } from "@/lib/github"
 import { runHeuristics } from "@/lib/heuristics"
 import { parsePRUrl } from "@/lib/parser"
 import { buildPrompt } from "@/lib/prompt"
+import { createAdminSupabaseClient, type Json } from "@/lib/supabase"
 import type {
   GitHubFile,
   GitHubReview,
@@ -220,6 +222,14 @@ function unique(values: string[]) {
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await getCurrentUser()
+
+    if (!user) {
+      return NextResponse.json({ error: "Sign in to analyze and save PR history." }, { status: 401 })
+    }
+
+    const supabase = createAdminSupabaseClient()
+
     const body = (await req.json()) as { url?: unknown }
     const url = typeof body.url === "string" ? body.url.trim() : ""
 
@@ -270,6 +280,20 @@ export async function POST(req: NextRequest) {
       dependency_impact: aiOutput.dependency_impact,
       auto_comments: aiOutput.auto_comments,
       review_strategy: aiOutput.review_strategy,
+    }
+
+    const { error: insertError } = await supabase.from("pr_analyses").insert({
+      user_id: user.id,
+      pr_url: report.meta.pr_url,
+      pr_title: report.meta.pr_title,
+      risk_level: report.risk.level,
+      risk_score: report.risk.score,
+      report: report as unknown as Json,
+    })
+
+    if (insertError) {
+      console.error("analysis history insert error:", insertError)
+      return NextResponse.json({ error: "Analysis completed, but saving history failed." }, { status: 500 })
     }
 
     return NextResponse.json(report)

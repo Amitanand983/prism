@@ -1,26 +1,99 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
+import AuthPanel from "@/components/AuthPanel"
 import ErrorState from "@/components/ErrorState"
+import HistoryList from "@/components/HistoryList"
 import LoadingState from "@/components/LoadingState"
 import PRInput from "@/components/PRInput"
 import ReportCard from "@/components/ReportCard"
+import type { AnalysisHistoryItem, AuthUser } from "@/lib/supabase"
 import type { PRAnalysisReport } from "@/types"
 
 export default function Home() {
+  const [user, setUser] = useState<AuthUser | null>(null)
+  const [authLoading, setAuthLoading] = useState(true)
+  const [history, setHistory] = useState<AnalysisHistoryItem[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyError, setHistoryError] = useState<string | null>(null)
   const [report, setReport] = useState<PRAnalysisReport | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const loadHistory = useCallback(async () => {
+    setHistoryLoading(true)
+    setHistoryError(null)
+
+    try {
+      const res = await fetch("/api/history")
+      const data = (await res.json()) as { history?: AnalysisHistoryItem[]; error?: string }
+
+      if (!res.ok) {
+        throw new Error(data.error ?? "Could not load analysis history")
+      }
+
+      setHistory(data.history ?? [])
+    } catch (err: unknown) {
+      setHistoryError(err instanceof Error ? err.message : "Could not load analysis history")
+    } finally {
+      setHistoryLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    let active = true
+
+    fetch("/api/auth/session")
+      .then((res) => res.json() as Promise<{ user: AuthUser | null }>)
+      .then((data) => {
+        if (!active) return
+        setUser(data.user)
+        setAuthLoading(false)
+        if (data.user) {
+          void loadHistory()
+        }
+      })
+      .catch(() => {
+      if (!active) return
+      setAuthLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [loadHistory])
+
+  function handleAuthChange(nextUser: AuthUser | null) {
+    setUser(nextUser)
+    setError(null)
+    setHistoryError(null)
+    setReport(null)
+
+    if (nextUser) {
+      void loadHistory()
+      return
+    }
+
+    setHistory([])
+  }
+
   async function handleAnalyze(url: string) {
+    if (!user) {
+      setError("Sign in with email OTP before analyzing a PR.")
+      return
+    }
+
     setLoading(true)
     setError(null)
+    setHistoryError(null)
     setReport(null)
 
     try {
       const res = await fetch("/api/analyze-pr", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ url }),
       })
       const data = (await res.json()) as PRAnalysisReport | { error?: string }
@@ -30,6 +103,7 @@ export default function Home() {
       }
 
       setReport(data as PRAnalysisReport)
+      await loadHistory()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong")
     } finally {
@@ -65,7 +139,22 @@ export default function Home() {
           </section>
         )}
 
-        <PRInput loading={loading} onAnalyze={handleAnalyze} />
+        <AuthPanel user={user} onAuthChange={handleAuthChange} />
+
+        {!authLoading && user && (
+          <>
+            <div className="mt-8">
+              <PRInput loading={loading} onAnalyze={handleAnalyze} />
+            </div>
+            <HistoryList history={history} loading={historyLoading} error={historyError} onSelect={setReport} />
+          </>
+        )}
+
+        {!authLoading && !user && (
+          <p className="mt-8 rounded-2xl border border-gray-800 bg-gray-900 p-5 text-center text-sm text-gray-400">
+            Sign in to analyze PRs and save your history.
+          </p>
+        )}
 
         {loading && <LoadingState />}
         {error && <ErrorState message={error} />}

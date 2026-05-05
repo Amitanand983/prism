@@ -1,4 +1,4 @@
-# 🔍 GitHub PR Intelligence Layer
+# PRISM (PR Intelligence System Mechanism)
 
 > A hybrid AI system that transforms code review from a manual, unstructured process into an AI-assisted, risk-aware, and actionable workflow.
 
@@ -650,7 +650,7 @@ export default function Home() {
         <div className="max-w-5xl mx-auto px-6 py-5 flex items-center gap-3">
           <span className="text-2xl">🔍</span>
           <div>
-            <h1 className="text-lg font-semibold text-white">PR Intelligence Layer</h1>
+            <h1 className="text-lg font-semibold text-white">PRISM (PR Intelligence System Mechanism)</h1>
             <p className="text-xs text-gray-400">AI-powered code review briefing</p>
           </div>
         </div>

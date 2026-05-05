@@ -2,8 +2,8 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "PR Intelligence Layer",
-  description: "AI-assisted risk briefing for GitHub pull requests",
+  title: "PRISM (PR Intelligence System Mechanism)",
+  description: "AI-assisted PR intelligence system for GitHub pull request review",
 }
 
 export default function RootLayout({

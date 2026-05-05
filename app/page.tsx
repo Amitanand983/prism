@@ -123,8 +123,11 @@ export default function Home() {
               PI
             </div>
             <div>
-              <h1 className="text-sm font-semibold tracking-wide text-white sm:text-base">PR Intelligence Layer</h1>
-              <p className="text-xs text-slate-400">AI risk briefing for serious code review</p>
+              <h1 className="text-sm font-semibold tracking-wide text-white sm:text-base">
+                PRISM
+                <span className="hidden text-slate-400 lg:inline"> (PR Intelligence System Mechanism)</span>
+              </h1>
+              <p className="text-xs text-slate-400">PR Intelligence System Mechanism</p>
             </div>
           </div>
 

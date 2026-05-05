@@ -16,13 +16,13 @@ export default function RiskMeter({ risk }: Props) {
 
   return (
     <div className={`${colors.bg} ${colors.border} h-full rounded-2xl border p-6`}>
-      <p className="mb-4 text-xs font-medium uppercase tracking-wider text-gray-400">Risk Score</p>
+      <p className="mb-4 text-xs font-medium uppercase tracking-wider text-gray-400">Evaluated PR Risk</p>
       <div className="mb-1 flex items-baseline gap-2">
         <span className={`text-6xl font-bold ${colors.text}`}>{risk.score}</span>
         <span className="text-lg text-gray-500">/10</span>
       </div>
       <span className={`${colors.bg} ${colors.text} ${colors.border} mb-4 inline-block rounded-full border px-2 py-1 text-xs font-semibold`}>
-        {risk.level}
+        {risk.level} after analysis
       </span>
       <p className="text-sm leading-6 text-gray-300">{risk.reason}</p>
       <div className="mt-4 grid grid-cols-2 gap-3 border-t border-gray-700 pt-4 text-xs text-gray-500">

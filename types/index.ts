@@ -28,10 +28,20 @@ export interface ImpactMapEntry {
   area: string
   description: string
   review_focus: string
+  flow: string[]
+  signals: string[]
   files: string[]
   additions: number
   deletions: number
   changes: number
+}
+
+export interface ReviewConcern {
+  author: string
+  source: "review" | "comment"
+  state?: string
+  file?: string
+  concern: string
 }
 
 export interface AutoComment {
@@ -53,6 +63,7 @@ export interface PRAnalysisReport {
   summary: string
   risk: RiskAssessment
   impact_map: ImpactMapEntry[]
+  active_review_concerns: ReviewConcern[]
   critical_files: CriticalFile[]
   reviewer_blind_spots: string[]
   dependency_impact: string
@@ -75,6 +86,20 @@ export interface GitHubFile {
   deletions: number
   changes: number
   patch?: string
+}
+
+export interface GitHubReview {
+  user: { login: string }
+  state: string
+  body: string | null
+  submitted_at: string | null
+}
+
+export interface GitHubReviewComment {
+  user: { login: string }
+  path: string
+  body: string
+  created_at: string
 }
 
 export interface GitHubPRData {

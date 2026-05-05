@@ -56,6 +56,33 @@ export default function ImpactMap({ impacts }: Props) {
                 <p className="text-sm leading-6 text-gray-300">{impact.review_focus}</p>
               </div>
 
+              {impact.flow.length > 0 && (
+                <div className="mt-3 rounded-lg border border-gray-800 bg-gray-900/70 p-3">
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">Affected flow</p>
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-gray-300">
+                    {impact.flow.map((step, index) => (
+                      <span key={step} className="flex items-center gap-2">
+                        <span className="rounded bg-gray-800 px-2 py-1 font-mono">{step}</span>
+                        {index < impact.flow.length - 1 && <span className="text-gray-600">-&gt;</span>}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {impact.signals.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {impact.signals.map((signal) => (
+                    <span
+                      key={signal}
+                      className="rounded-full border border-gray-700 bg-gray-800 px-2 py-1 text-xs text-gray-400"
+                    >
+                      {signal}
+                    </span>
+                  ))}
+                </div>
+              )}
+
               <div className="mt-3 space-y-1">
                 {impact.files.slice(0, MAX_VISIBLE_FILES).map((file) => (
                   <p key={file} className="truncate font-mono text-xs text-blue-300">

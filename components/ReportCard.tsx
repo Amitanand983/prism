@@ -4,6 +4,7 @@ import CriticalFiles from "@/components/CriticalFiles"
 import DependencyImpact from "@/components/DependencyImpact"
 import ImpactMap from "@/components/ImpactMap"
 import MetaBanner from "@/components/MetaBanner"
+import ReviewConcerns from "@/components/ReviewConcerns"
 import ReviewStrategy from "@/components/ReviewStrategy"
 import RiskMeter from "@/components/RiskMeter"
 import SummarySection from "@/components/SummarySection"
@@ -26,6 +27,7 @@ export default function ReportCard({ report }: Props) {
         </div>
       </div>
       <ImpactMap impacts={report.impact_map} />
+      <ReviewConcerns concerns={report.active_review_concerns} />
       <ReviewStrategy steps={report.review_strategy} />
       <CriticalFiles files={report.critical_files} />
       <AutoComments comments={report.auto_comments} />

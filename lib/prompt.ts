@@ -45,6 +45,13 @@ ${diffForPrompt}
 ## Instructions
 Return ONLY a valid JSON object. No markdown. No explanation. No preamble.
 
+Tone and scoring guidance:
+- Be direct and evidence-based, not alarmist.
+- Score the reviewed implementation as it exists in the diff, not the worst possible version of the feature.
+- If a PR touches sensitive behavior but the implementation is small, well-contained, and tested, say that clearly.
+- Distinguish between user/business impact of the bug being fixed and residual risk in the proposed change.
+- Avoid fear-mongering language. Prefer "review focus", "residual risk", and "validated by tests" over dramatic wording.
+
 The JSON must follow this exact structure:
 {
   "summary": "2-3 sentence semantic summary of what actually changed and why",

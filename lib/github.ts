@@ -1,4 +1,4 @@
-import type { GitHubFile, GitHubPRData } from "@/types"
+import type { GitHubFile, GitHubPRData, GitHubReview, GitHubReviewComment } from "@/types"
 
 const BASE = "https://api.github.com"
 const MAX_FILE_PAGES = 10
@@ -49,6 +49,18 @@ export async function fetchPRFiles(owner: string, repo: string, prNumber: number
   }
 
   return files
+}
+
+export async function fetchPRReviews(owner: string, repo: string, prNumber: number): Promise<GitHubReview[]> {
+  return fetchGitHub<GitHubReview[]>(`/repos/${owner}/${repo}/pulls/${prNumber}/reviews`)
+}
+
+export async function fetchPRReviewComments(
+  owner: string,
+  repo: string,
+  prNumber: number,
+): Promise<GitHubReviewComment[]> {
+  return fetchGitHub<GitHubReviewComment[]>(`/repos/${owner}/${repo}/pulls/${prNumber}/comments`)
 }
 
 export function buildDiffContent(files: GitHubFile[]): string {

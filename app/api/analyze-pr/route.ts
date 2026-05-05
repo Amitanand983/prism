@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 import { analyzeWithAI, parseAIResponse } from "@/lib/ai"
-import { buildDiffContent, fetchPRData, fetchPRFiles } from "@/lib/github"
+import { buildDiffContent, fetchPRData, fetchPRFiles, fetchPRReviewComments, fetchPRReviews } from "@/lib/github"
 import { runHeuristics } from "@/lib/heuristics"
 import { parsePRUrl } from "@/lib/parser"
 import { buildPrompt } from "@/lib/prompt"
-import type { GitHubFile, ImpactMapEntry, PRAnalysisReport, RiskAssessment } from "@/types"
+import type {
+  GitHubFile,
+  GitHubReview,
+  GitHubReviewComment,
+  ImpactMapEntry,
+  PRAnalysisReport,
+  ReviewConcern,
+  RiskAssessment,
+} from "@/types"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -34,10 +42,16 @@ function publicErrorMessage(error: unknown): string {
 
 const IMPACT_AREAS = [
   {
-    area: "API & Server Flow",
-    pattern: /^(app\/api|pages\/api|server|api|routes|controllers)\//i,
+    area: "REST API Flow",
+    pattern: /(rest\/resource-server|controller|restcontroller|resourceserver|spring)/i,
     description: "Server-side behavior or data returned to the UI may change.",
     review_focus: "Validate request handling, response shape, auth boundaries, and error paths.",
+  },
+  {
+    area: "Component Domain Logic",
+    pattern: /(component|components)/i,
+    description: "Component creation, update, merge, or visibility behavior may change.",
+    review_focus: "Check omitted fields, explicit field updates, permissions, moderation paths, and persisted state.",
   },
   {
     area: "User Interface",
@@ -85,9 +99,12 @@ const IMPACT_AREAS = [
 
 function buildImpactMap(files: GitHubFile[]): ImpactMapEntry[] {
   const groups = new Map<string, ImpactMapEntry>()
+  const diffText = files.map((file) => `${file.filename}\n${file.patch ?? ""}`).join("\n")
+  const touchesVisibility = /visbility|visibility/i.test(diffText)
+  const touchesPatch = /patch|partial update|containsKey|requestBody/i.test(diffText)
 
   for (const file of files) {
-    const matchedArea = IMPACT_AREAS.find(({ pattern }) => pattern.test(file.filename)) ?? {
+    const matchedArea = classifyImpactArea(file, touchesVisibility) ?? {
       area: "Core Code",
       description: "Shared application logic may change.",
       review_focus: "Review callers, edge cases, and whether tests cover the changed path.",
@@ -97,6 +114,8 @@ function buildImpactMap(files: GitHubFile[]): ImpactMapEntry[] {
       area: matchedArea.area,
       description: matchedArea.description,
       review_focus: matchedArea.review_focus,
+      flow: buildAffectedFlow(matchedArea.area, touchesVisibility, touchesPatch),
+      signals: buildImpactSignals(file, touchesVisibility, touchesPatch),
       files: [],
       additions: 0,
       deletions: 0,
@@ -107,10 +126,96 @@ function buildImpactMap(files: GitHubFile[]): ImpactMapEntry[] {
     existing.additions += file.additions
     existing.deletions += file.deletions
     existing.changes += file.changes
+    existing.signals = unique([...existing.signals, ...buildImpactSignals(file, touchesVisibility, touchesPatch)])
     groups.set(matchedArea.area, existing)
   }
 
   return [...groups.values()].sort((a, b) => b.changes - a.changes)
+}
+
+function classifyImpactArea(file: GitHubFile, touchesVisibility: boolean) {
+  if (/(\.test\.|\.spec\.|__tests__|\/tests?\/|SpecTest)/i.test(file.filename)) {
+    return {
+      area: "Tests",
+      description: "Automated coverage or expected behavior may change.",
+      review_focus: "Confirm tests cover the changed behavior and still run reliably.",
+    }
+  }
+
+  if (touchesVisibility && /(ComponentController|RestControllerHelper|\/component\/)/i.test(file.filename)) {
+    return {
+      area: "Component Visibility Patch Flow",
+      description: "PATCH behavior for component visibility and partial updates is affected.",
+      review_focus:
+        "Verify omitted visibility is preserved, explicit visibility updates still work, and unrelated PATCH fields keep their existing behavior.",
+    }
+  }
+
+  return IMPACT_AREAS.find(({ pattern }) => pattern.test(file.filename))
+}
+
+function buildAffectedFlow(area: string, touchesVisibility: boolean, touchesPatch: boolean): string[] {
+  if (area === "Tests") {
+    return ["PATCH scenario setup", "Mock request execution", "Response visibility assertion"]
+  }
+
+  if (touchesVisibility && touchesPatch) {
+    return [
+      "PATCH /api/components/{id}",
+      "ComponentController.patchComponent()",
+      "RestControllerHelper.updateComponent()",
+      "Existing component visibility",
+    ]
+  }
+
+  if (area === "REST API Flow") {
+    return ["Incoming request", "Controller handler", "Helper/service layer", "HTTP response"]
+  }
+
+  return []
+}
+
+function buildImpactSignals(file: GitHubFile, touchesVisibility: boolean, touchesPatch: boolean): string[] {
+  const signals: string[] = []
+
+  if (touchesPatch) signals.push("PATCH semantics")
+  if (touchesVisibility) signals.push("visibility field handling")
+  if (/RestControllerHelper/i.test(file.filename)) signals.push("shared update helper")
+  if (/Controller/i.test(file.filename)) signals.push("request deserialization")
+  if (/test|spec/i.test(file.filename)) signals.push("regression coverage")
+
+  return signals
+}
+
+function buildReviewConcerns(reviews: GitHubReview[], comments: GitHubReviewComment[]): ReviewConcern[] {
+  const reviewConcerns = reviews
+    .filter((review) => review.body?.trim())
+    .filter((review) => ["CHANGES_REQUESTED", "COMMENTED"].includes(review.state))
+    .map((review) => ({
+      author: review.user.login,
+      source: "review" as const,
+      state: review.state,
+      concern: summarizeConcern(review.body ?? ""),
+    }))
+
+  const commentConcerns = comments
+    .filter((comment) => comment.body.trim())
+    .map((comment) => ({
+      author: comment.user.login,
+      source: "comment" as const,
+      file: comment.path,
+      concern: summarizeConcern(comment.body),
+    }))
+
+  return [...reviewConcerns, ...commentConcerns].slice(0, 4)
+}
+
+function summarizeConcern(body: string) {
+  return body.replace(/\s+/g, " ").trim().slice(0, 220)
+}
+
+function unique(values: string[]) {
+  return [...new Set(values)]
 }
 
 export async function POST(req: NextRequest) {
@@ -123,9 +228,11 @@ export async function POST(req: NextRequest) {
     }
 
     const { owner, repo, pr_number } = parsePRUrl(url)
-    const [prData, files] = await Promise.all([
+    const [prData, files, reviews, reviewComments] = await Promise.all([
       fetchPRData(owner, repo, pr_number),
       fetchPRFiles(owner, repo, pr_number),
+      fetchPRReviews(owner, repo, pr_number),
+      fetchPRReviewComments(owner, repo, pr_number),
     ])
 
     const signals = runHeuristics(files, prData.additions, prData.deletions)
@@ -157,6 +264,7 @@ export async function POST(req: NextRequest) {
         reason: aiOutput.risk_reason,
       },
       impact_map: buildImpactMap(files),
+      active_review_concerns: buildReviewConcerns(reviews, reviewComments),
       critical_files: aiOutput.critical_files,
       reviewer_blind_spots: aiOutput.reviewer_blind_spots,
       dependency_impact: aiOutput.dependency_impact,

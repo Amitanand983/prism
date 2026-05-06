@@ -3,8 +3,11 @@ import BlindSpots from "@/components/BlindSpots"
 import CriticalFiles from "@/components/CriticalFiles"
 import DependencyImpact from "@/components/DependencyImpact"
 import ExecutiveBriefing from "@/components/ExecutiveBriefing"
+import ImpactGraph from "@/components/ImpactGraph"
 import ImpactMap from "@/components/ImpactMap"
 import MetaBanner from "@/components/MetaBanner"
+import RepoContextPanel from "@/components/RepoContextPanel"
+import ReviewChecklist from "@/components/ReviewChecklist"
 import ReviewConcerns from "@/components/ReviewConcerns"
 import ReviewStrategy from "@/components/ReviewStrategy"
 import RiskMeter from "@/components/RiskMeter"
@@ -27,6 +30,7 @@ export default function ReportCard({ report }: Props) {
       </div>
 
       <ExecutiveBriefing report={report} />
+      <ImpactGraph report={report} />
       <MetaBanner meta={report.meta} />
 
       <SectionHeader
@@ -51,6 +55,7 @@ export default function ReportCard({ report }: Props) {
       <ImpactMap impacts={report.impact_map} />
       <ReviewConcerns concerns={report.active_review_concerns} />
       <ReviewStrategy steps={report.review_strategy} />
+      <ReviewChecklist items={report.review_checklist} />
 
       <SectionHeader
         eyebrow="Reviewer toolkit"
@@ -63,6 +68,7 @@ export default function ReportCard({ report }: Props) {
         <BlindSpots spots={report.reviewer_blind_spots} />
         <DependencyImpact impact={report.dependency_impact} />
       </div>
+      <RepoContextPanel context={report.repo_context} />
     </section>
   )
 }

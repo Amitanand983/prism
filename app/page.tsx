@@ -19,6 +19,7 @@ export default function Home() {
   const [report, setReport] = useState<PRAnalysisReport | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const showHistoryPanel = Boolean(user && !report && !loading)
 
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true)
@@ -168,12 +169,23 @@ export default function Home() {
         <AuthPanel user={user} onAuthChange={handleAuthChange} />
 
         {!authLoading && user && (
-          <>
-            <div className="mt-8">
+          <div
+            className={`mt-8 grid items-start gap-6 ${
+              showHistoryPanel ? "lg:grid-cols-[minmax(0,1fr)_320px]" : "grid-cols-1"
+            }`}
+          >
+            <div className="min-w-0">
               <PRInput loading={loading} onAnalyze={handleAnalyze} />
+              {loading && <LoadingState />}
+              {error && <ErrorState message={error} />}
+              {report && <ReportCard report={report} />}
             </div>
-            <HistoryList history={history} loading={historyLoading} error={historyError} onSelect={setReport} />
-          </>
+            {showHistoryPanel && (
+              <aside className="lg:sticky lg:top-24">
+                <HistoryList history={history} loading={historyLoading} error={historyError} onSelect={setReport} />
+              </aside>
+            )}
+          </div>
         )}
 
         {!authLoading && !user && (
@@ -182,9 +194,7 @@ export default function Home() {
           </p>
         )}
 
-        {loading && <LoadingState />}
-        {error && <ErrorState message={error} />}
-        {report && <ReportCard report={report} />}
+        {!authLoading && !user && error && <ErrorState message={error} />}
       </div>
     </main>
   )

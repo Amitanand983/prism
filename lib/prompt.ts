@@ -1,8 +1,8 @@
-import type { GitHubPRData, HeuristicSignals } from "@/types"
+import type { GitHubPRData, HeuristicSignals, RepoContext } from "@/types"
 
 const MAX_DIFF_CHARS = 14000
 
-export function buildPrompt(pr: GitHubPRData, signals: HeuristicSignals, diff: string): string {
+export function buildPrompt(pr: GitHubPRData, signals: HeuristicSignals, diff: string, repoContext?: RepoContext): string {
   const diffForPrompt =
     diff.length > MAX_DIFF_CHARS ? `${diff.slice(0, MAX_DIFF_CHARS)}\n\n[diff truncated for length]` : diff
 
@@ -42,6 +42,11 @@ ${diffForPrompt}
 
 ---
 
+## Repo Context Lite
+${formatRepoContext(repoContext)}
+
+---
+
 ## Instructions
 Return ONLY a valid JSON object. No markdown. No explanation. No preamble.
 
@@ -64,6 +69,15 @@ The JSON must follow this exact structure:
       "risk_contribution": "HIGH"
     }
   ],
+  "risk_explanations": [
+    {
+      "subject": "Specific risk area or file",
+      "file": "optional/exact/file/path",
+      "why_this_matters": "Explain in reviewer-friendly language why this risk matters",
+      "reviewer_guidance": "Concrete thing a reviewer should verify",
+      "severity": "HIGH"
+    }
+  ],
   "reviewer_blind_spots": [
     "Specific, concrete thing a reviewer might miss"
   ],
@@ -83,6 +97,14 @@ The JSON must follow this exact structure:
       "target": "Which file or area",
       "reason": "Why start here"
     }
+  ],
+  "review_checklist": [
+    {
+      "task": "Concrete verification task for the reviewer",
+      "reason": "Why this task matters",
+      "file": "optional/exact/file/path",
+      "priority": "HIGH"
+    }
   ]
 }
 
@@ -90,8 +112,41 @@ Rules:
 - llm_score must be a number from 1 to 10.
 - risk_contribution must be one of LOW, MEDIUM, HIGH.
 - severity must be one of INFO, WARNING, CRITICAL.
+- risk_explanations severity must be one of LOW, MEDIUM, HIGH, CRITICAL.
+- review_checklist priority must be one of LOW, MEDIUM, HIGH.
+- risk_explanations should teach reviewers why each important risk matters in practical terms.
+- review_checklist should contain 4-7 concrete tasks a reviewer can execute.
 - reviewer_blind_spots must be specific to THIS diff, not generic advice.
 - auto_comments must reference actual files from the diff.
 - review_strategy should have 3-5 steps ordered by priority.
 - Return nothing except the JSON object.`
+}
+
+function formatRepoContext(context?: RepoContext) {
+  if (!context) {
+    return "No additional repository context was available."
+  }
+
+  const sections = [
+    formatContextFiles("Manifests and build files", context.manifests),
+    formatContextFiles("README and documentation", context.docs),
+    formatContextFiles("Nearby files", context.nearby_files),
+    formatContextFiles("Related tests", context.related_tests),
+    formatContextFiles("Similar files", context.similar_files),
+    context.imports.length ? `Imports observed in changed files:\n${context.imports.map((item) => `- ${item}`).join("\n")}` : "",
+    context.notes.length ? `Context notes:\n${context.notes.map((item) => `- ${item}`).join("\n")}` : "",
+  ].filter(Boolean)
+
+  return sections.length ? sections.join("\n\n") : "No additional repository context was available."
+}
+
+function formatContextFiles(title: string, files: RepoContext["manifests"]) {
+  if (!files.length) return ""
+
+  return `${title}:\n${files
+    .map((file) => {
+      const snippet = file.snippet ? `\nSnippet:\n${file.snippet}` : ""
+      return `- ${file.path}: ${file.reason}${snippet}`
+    })
+    .join("\n")}`
 }

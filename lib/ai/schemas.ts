@@ -13,6 +13,17 @@ export const aiOutputSchema = z.object({
       }),
     )
     .default([]),
+  risk_explanations: z
+    .array(
+      z.object({
+        subject: z.string().min(1),
+        file: z.string().min(1).optional(),
+        why_this_matters: z.string().min(1),
+        reviewer_guidance: z.string().min(1),
+        severity: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
+      }),
+    )
+    .default([]),
   reviewer_blind_spots: z.array(z.string().min(1)).default([]),
   dependency_impact: z.string().default(""),
   auto_comments: z
@@ -32,6 +43,16 @@ export const aiOutputSchema = z.object({
         action: z.string().min(1),
         target: z.string().min(1),
         reason: z.string().min(1),
+      }),
+    )
+    .default([]),
+  review_checklist: z
+    .array(
+      z.object({
+        task: z.string().min(1),
+        reason: z.string().min(1),
+        file: z.string().min(1).optional(),
+        priority: z.enum(["LOW", "MEDIUM", "HIGH"]),
       }),
     )
     .default([]),

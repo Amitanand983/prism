@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { analyzeWithAI, parseAIResponse } from "@/lib/ai"
 import { getCurrentUser } from "@/lib/auth"
-import { buildDiffContent, fetchPRData, fetchPRFiles, fetchPRReviewComments, fetchPRReviews } from "@/lib/github"
+import {
+  buildDiffContent,
+  fetchPRData,
+  fetchPRFiles,
+  fetchPRReviewComments,
+  fetchPRReviews,
+  fetchRepoContext,
+} from "@/lib/github"
 import { runHeuristics } from "@/lib/heuristics"
 import { parsePRUrl } from "@/lib/parser"
 import { buildPrompt } from "@/lib/prompt"
@@ -246,7 +253,8 @@ export async function POST(req: NextRequest) {
     ])
 
     const signals = runHeuristics(files, prData.additions, prData.deletions)
-    const prompt = buildPrompt(prData, signals, buildDiffContent(files))
+    const repoContext = await fetchRepoContext(owner, repo, prData, files)
+    const prompt = buildPrompt(prData, signals, buildDiffContent(files), repoContext)
     const aiOutput = parseAIResponse(await analyzeWithAI(prompt))
 
     const llmScore = aiOutput.llm_score
@@ -273,6 +281,9 @@ export async function POST(req: NextRequest) {
         level: riskLevel(finalScore),
         reason: aiOutput.risk_reason,
       },
+      repo_context: repoContext,
+      risk_explanations: aiOutput.risk_explanations,
+      review_checklist: aiOutput.review_checklist,
       impact_map: buildImpactMap(files),
       active_review_concerns: buildReviewConcerns(reviews, reviewComments),
       critical_files: aiOutput.critical_files,

@@ -24,6 +24,14 @@ export interface CriticalFile {
   risk_contribution: "LOW" | "MEDIUM" | "HIGH"
 }
 
+export interface RiskExplanation {
+  subject: string
+  file?: string
+  why_this_matters: string
+  reviewer_guidance: string
+  severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
+}
+
 export interface ImpactMapEntry {
   area: string
   description: string
@@ -58,11 +66,37 @@ export interface ReviewStep {
   reason: string
 }
 
+export interface ReviewChecklistItem {
+  task: string
+  reason: string
+  file?: string
+  priority: "LOW" | "MEDIUM" | "HIGH"
+}
+
+export interface RepoContextFile {
+  path: string
+  reason: string
+  snippet?: string
+}
+
+export interface RepoContext {
+  manifests: RepoContextFile[]
+  docs: RepoContextFile[]
+  nearby_files: RepoContextFile[]
+  related_tests: RepoContextFile[]
+  similar_files: RepoContextFile[]
+  imports: string[]
+  notes: string[]
+}
+
 export interface PRAnalysisReport {
   meta: PRMeta
   summary: string
   risk: RiskAssessment
   impact_map: ImpactMapEntry[]
+  repo_context?: RepoContext
+  risk_explanations?: RiskExplanation[]
+  review_checklist?: ReviewChecklistItem[]
   active_review_concerns: ReviewConcern[]
   critical_files: CriticalFile[]
   reviewer_blind_spots: string[]
